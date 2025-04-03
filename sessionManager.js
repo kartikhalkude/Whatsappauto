@@ -147,7 +147,7 @@ class SessionManager {
                     });
                 },
                 puppeteerOptions: {
-                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/opt/render/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux/chrome',
+                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
@@ -161,11 +161,14 @@ class SessionManager {
                         '--disable-software-rasterizer',
                         '--disable-features=site-per-process',
                         '--disable-features=IsolateOrigins',
-                        '--disable-site-isolation-trials'
+                        '--disable-site-isolation-trials',
+                        '--disable-web-security',
+                        '--disable-features=IsolateOrigins,site-per-process'
                     ],
                     headless: true,
                     ignoreHTTPSErrors: true,
-                    defaultViewport: null
+                    defaultViewport: null,
+                    timeout: 0
                 },
                 status: false,
                 statusFind: (statusSession, session) => {
