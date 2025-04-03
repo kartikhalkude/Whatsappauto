@@ -7,3 +7,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "true"
+    buildpacks:
+      - https://github.com/jontewks/puppeteer-heroku-buildpack
+      - heroku/nodejs
