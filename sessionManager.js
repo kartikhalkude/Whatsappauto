@@ -146,7 +146,8 @@ class SessionManager {
                     '--no-first-run',
                     '--no-zygote',
                     '--disable-gpu'
-                ]
+                ],
+                executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/opt/render/.cache/ms-playwright/chromium-1161/chrome-linux/chrome'
             });
 
             const client = await create({
