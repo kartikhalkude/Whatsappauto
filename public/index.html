@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp API Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar">
+          <div class="sidebar-header">
+            <h3><i class="fab fa-whatsapp me-2"></i>WhatsApp API</h3>
+          </div>
+          <div class="session-manager">
+            <div class="session-create mb-4">
+              <h5 class="mb-3">
+                <i class="fas fa-plus-circle me-2"></i>Create Session
+              </h5>
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="sessionIdInput"
+                  class="form-control"
+                  placeholder="Enter Session ID"
+                />
+                <button class="btn btn-primary" id="createSessionBtn">
+                  Create
+                </button>
+              </div>
+            </div>
+            <div class="session-list">
+              <h5><i class="fas fa-list-alt me-2"></i>Active Sessions</h5>
+              <ul id="sessionsList" class="list-group">
+                <!-- Session items will be added here dynamically -->
+              </ul>
+            </div>
+          </div>
+          <div class="sidebar-footer">
+            <p>WhatsApp API Manager v1.0</p>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 main-content">
+          <div class="main-header">
+            <h2>WhatsApp Web Dashboard</h2>
+            <p class="text-muted">
+              Manage your WhatsApp sessions and send messages
+            </p>
+          </div>
+          <div class="tabs">
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link active"
+                  id="sessions-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#sessions"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="fas fa-mobile-alt me-2"></i>Sessions
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="send-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#send"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="fas fa-paper-plane me-2"></i>Send Message
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="bulk-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#bulk"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="fas fa-broadcast-tower me-2"></i>Bulk Send
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="auto-reply-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#auto-reply"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="fas fa-reply-all me-2"></i>Auto Reply
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="status-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#status"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="fas fa-info-circle me-2"></i>Status
+                </button>
+              </li>
+            </ul>
+            <div class="tab-content" id="nav-tabContent">
+              <!-- Sessions Tab -->
+              <div
+                class="tab-pane fade show active"
+                id="sessions"
+                role="tabpanel"
+              >
+                <div class="container mt-4">
+                  <!-- Welcome Dashboard -->
+                  <div class="text-center py-5" id="welcome-dashboard">
+                    <i class="fab fa-whatsapp fa-4x text-success mb-4"></i>
+                    <h2>Welcome to WhatsApp API Dashboard</h2>
+                    <p class="text-muted">
+                      Create a session or select an existing one to begin
+                    </p>
+                    <button class="btn btn-success" id="quickCreateBtn">
+                      <i class="fas fa-plus-circle me-2"></i>Quick Create
+                      Session
+                    </button>
+                  </div>
+
+                  <!-- Session Management -->
+                  <div class="row">
+                    <div class="col-md-6">
+                      <!-- Create Session Form -->
+                      <div class="card mb-4">
+                        
+                        
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- QR Code Container -->
+                  <div id="qrContainer" class="card mb-4">
+                    <!-- QR code will be displayed here -->
+                  </div>
+
+                  <!-- Active Sessions -->
+                 
+                </div>
+              </div>
+
+              <!-- Send Message Tab -->
+              <div class="tab-pane fade" id="send" role="tabpanel">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>
+                      <i class="fas fa-paper-plane me-2"></i>Send WhatsApp
+                      Message
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <form id="sendMessageForm">
+                      <div class="mb-3">
+                        <label for="sessionSelect" class="form-label"
+                          >Select Session</label
+                        >
+                        <select class="form-select" id="sessionSelect" required>
+                          <option value="" selected disabled>
+                            Choose a session
+                          </option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="phoneNumber" class="form-label"
+                          >Phone Number (with country code)</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text"
+                            ><i class="fas fa-phone"></i
+                          ></span>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="phoneNumber"
+                            placeholder="e.g. 919766851268"
+                            required
+                          />
+                        </div>
+                        <small class="text-muted"
+                          >Include country code without '+' or spaces</small
+                        >
+                      </div>
+                      <div class="mb-3">
+                        <label for="messageText" class="form-label"
+                          >Message</label
+                        >
+                        <textarea
+                          class="form-control"
+                          id="messageText"
+                          rows="4"
+                          placeholder="Type your message here..."
+                          required
+                        ></textarea>
+                      </div>
+                      <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                          <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Recent Messages -->
+                <div class="card mt-4">
+                  <div class="card-header">
+                    <h5><i class="fas fa-history me-2"></i>Recent Messages</h5>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-hover mb-0">
+                        <tbody id="recentMessagesList">
+                          <!-- Recent messages will be added here -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bulk Messages Tab -->
+              <div class="tab-pane fade" id="bulk" role="tabpanel">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>
+                      <i class="fas fa-envelope-open-text me-2"></i>Send Bulk
+                      Messages
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <form id="bulkMessageForm">
+                      <div class="mb-3">
+                        <label for="bulkSessionSelect" class="form-label"
+                          >Select Session</label
+                        >
+                        <select
+                          class="form-select"
+                          id="bulkSessionSelect"
+                          required
+                        >
+                          <option value="" selected disabled>
+                            Choose a session
+                          </option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="bulkPhoneNumbers" class="form-label"
+                          >Phone Numbers (one per line)</label
+                        >
+                        <textarea
+                          class="form-control"
+                          id="bulkPhoneNumbers"
+                          rows="4"
+                          placeholder="919766851268&#10;917012345678&#10;918765432109"
+                          required
+                        ></textarea>
+                        <small class="text-muted"
+                          >Include country code without '+' or spaces</small
+                        >
+                      </div>
+                      <div class="mb-3">
+                        <label for="bulkMessageText" class="form-label"
+                          >Message Template</label
+                        >
+                        <textarea
+                          class="form-control"
+                          id="bulkMessageText"
+                          rows="4"
+                          placeholder="Hello {{name}}, this is a test message."
+                          required
+                        ></textarea>
+                        <small class="text-muted"
+                          >Use {{name}} as a placeholder for recipient
+                          name</small
+                        >
+                      </div>
+                      <div class="mb-3">
+                        <label for="bulkDelay" class="form-label"
+                          >Delay Between Messages (seconds)</label
+                        >
+                        <input
+                          type="number"
+                          class="form-control"
+                          id="bulkDelay"
+                          min="1"
+                          value="3"
+                        />
+                        <small class="text-muted"
+                          >Recommended: 3-5 seconds to avoid being
+                          blocked</small
+                        >
+                      </div>
+                      <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                          <i class="fas fa-paper-plane me-2"></i>Send Bulk
+                          Messages
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Bulk Progress -->
+                <div class="card mt-4 d-none" id="bulkProgressCard">
+                  <div class="card-header">
+                    <h5><i class="fas fa-tasks me-2"></i>Bulk Send Progress</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="progress mb-3">
+                      <div
+                        class="progress-bar progress-bar-striped progress-bar-animated"
+                        id="bulkProgressBar"
+                        role="progressbar"
+                        style="width: 0%"
+                      ></div>
+                    </div>
+                    <div id="bulkProgressStats" class="text-center">
+                      Processed: <span id="bulkSent">0</span> /
+                      <span id="bulkTotal">0</span>
+                    </div>
+                    <div
+                      id="bulkProgressLog"
+                      class="mt-3 border rounded p-3 bg-light"
+                      style="max-height: 200px; overflow-y: auto"
+                    >
+                      <!-- Log entries will appear here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Auto Reply Tab -->
+              <div class="tab-pane fade" id="auto-reply" role="tabpanel">
+                <div class="container mt-4">
+                  <!-- Trigger-Based Auto Reply Configuration -->
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h5 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>Trigger-Based Auto
+                        Reply Configuration
+                      </h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="row mb-4">
+                        <div class="col-md-6">
+                          <label class="form-label">Select Session</label>
+                          <select
+                            class="form-select"
+                            id="autoReplySessionSelect"
+                          >
+                            <option value="">Select a session...</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Auto Reply Status</label>
+                          <div class="d-flex align-items-center">
+                            <div class="form-check form-switch">
+                              <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="autoReplyToggle"
+                              />
+                              <label
+                                class="form-check-label"
+                                for="autoReplyToggle"
+                                >Enable</label
+                              >
+                            </div>
+                            <div
+                              id="autoReplyStatus"
+                              class="ms-3 alert alert-secondary"
+                            >
+                              <i class="fas fa-circle me-2"></i>Select a session
+                              to configure auto-reply
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Trigger Rules Section -->
+                      <div class="mb-4">
+                        <div
+                          class="d-flex justify-content-between align-items-center mb-3"
+                        >
+                          <h6 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Trigger Rules
+                          </h6>
+                          <button
+                            class="btn btn-success btn-sm"
+                            id="addTriggerBtn"
+                          >
+                            <i class="fas fa-plus me-1"></i>Add Trigger
+                          </button>
+                        </div>
+                        <div id="triggerRulesList">
+                          <!-- Trigger rules will be added here -->
+                        </div>
+                      </div>
+
+                      <button class="btn btn-primary" id="saveAutoReplyBtn">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Active Auto Reply Rules -->
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="mb-0">
+                        <i class="fas fa-list-check me-2"></i>Active Auto Reply
+                        Rules
+                      </h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="table-responsive">
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th>Session</th>
+                              <th>Status</th>
+                              <th>Triggers</th>
+                              <th>Last Updated</th>
+                            </tr>
+                          </thead>
+                          <tbody id="activeAutoReplies">
+                            <!-- Active auto replies will be listed here -->
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Tab -->
+              <div class="tab-pane fade" id="status" role="tabpanel">
+                <div class="container mt-4">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="card mb-4">
+                        <div class="card-body">
+                          <h5 class="card-title">Recent Messages</h5>
+                          <div id="recent-messages" class="list-group">
+                            <!-- Recent messages will be populated here -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">Statistics</h5>
+                          <div id="stats">
+                            <!-- Statistics will be populated here -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div
+        id="statusToast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <i class="fas fa-info-circle me-2" id="toastIcon"></i>
+          <strong class="me-auto" id="toastTitle">Notification</strong>
+          <small id="toastTime">Just now</small>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body" id="toastMessage">Message goes here</div>
+      </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-qrcode me-2"></i>Scan QR Code
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <div id="qrImage"></div>
+            <p class="mt-3">Scan this QR code with WhatsApp on your phone</p>
+            <ol class="text-start small text-muted">
+              <li>Open WhatsApp on your phone</li>
+              <li>
+                Tap Menu <i class="fas fa-ellipsis-v"></i> or Settings
+                <i class="fas fa-cog"></i>
+              </li>
+              <li>Select WhatsApp Web</li>
+              <li>Point your phone at this screen to capture the code</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Detail Modal -->
+    <div
+      class="modal fade"
+      id="sessionDetailModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-info-circle me-2"></i>Session Info
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="sessionDetailContent">
+            <!-- Session details will be loaded here -->
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trigger Rule Template -->
+    <template id="triggerRuleTemplate">
+      <div class="trigger-rule card mb-3">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label">Trigger Word/Phrase</label>
+              <input
+                type="text"
+                class="form-control trigger-input"
+                placeholder="Enter trigger word"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Auto Reply Message</label>
+              <textarea
+                class="form-control response-input"
+                rows="1"
+                placeholder="Enter response message"
+              ></textarea>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+              <button class="btn btn-danger delete-trigger">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

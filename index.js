@@ -1,184 +1,229 @@
-const wppconnect = require('@wppconnect-team/wppconnect');
 const express = require('express');
-const sessionManager = require('./sessionManager');
+const http = require('http');
+const socketIo = require('socket.io');
+const path = require('path');
+const bodyParser = require('body-parser');
+const SessionManager = require('./sessionManager');
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 const port = 3000;
 
-app.use(express.json());
+// Middleware
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Initialize the session manager with io
+const manager = new SessionManager(io);
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    console.log('New client connected');
+    
+    // Create session event
+    socket.on('create-session', async (sessionId) => {
+        console.log('Creating session:', sessionId);
+        
+        // Register callback for QR code and status updates
+        manager.registerQrCallback(sessionId, (data) => {
+            // Check if it's a disconnection event
+            if (data.disconnected) {
+                // Get session info to send complete status
+                const sessionInfo = manager.getSessionInfo(sessionId);
+                
+                // Enhance data with session info
+                data.info = sessionInfo;
+                
+                console.log(`Sending disconnection event for ${sessionId}`);
+            }
+            
+            // Send the data to the client
+            socket.emit('qr-code', data);
+        });
+        
+        // Create session
+        const result = await manager.createSession(sessionId);
+        
+        if (result && result.error) {
+            socket.emit('session-error', { error: result.error });
+        }
+    });
+    
+    // Disconnect event
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
+});
+
+// Serve the main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Simple health check endpoint
-app.get('/', (req, res) => {
-    const activeSessions = sessionManager.getAllSessions();
+app.get('/api/status', (req, res) => {
+    const activeSessions = manager.getAllSessions();
     res.json({ 
         status: 'Server is running', 
         activeSessions: activeSessions 
     });
 });
 
-// Create a new session
-app.post('/session/create', async (req, res) => {
+// Get all active sessions
+app.get('/api/sessions', (req, res) => {
+    try {
+        const sessions = manager.getAllSessions();
+        res.json({ success: true, sessions });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Create a session (API endpoint version)
+app.post('/api/session/create', async (req, res) => {
     try {
         const { sessionId } = req.body;
         
         if (!sessionId) {
-            return res.status(400).json({ error: 'Session ID is required' });
+            return res.status(400).json({ success: false, error: 'Session ID is required' });
         }
-
-        const client = await sessionManager.createSession(sessionId);
-        res.json({ 
-            success: true, 
-            message: `Session ${sessionId} created successfully` 
-        });
+        
+        const result = await manager.createSession(sessionId);
+        
+        if (result.error) {
+            return res.status(400).json({ success: false, error: result.error });
+        }
+        
+        res.json({ success: true, message: 'Session created successfully' });
     } catch (error) {
-        console.error('Error creating session:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to create session',
-            details: error.message 
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // Close a session
-app.post('/session/close', async (req, res) => {
-    try {
-        const { sessionId } = req.body;
-        
-        if (!sessionId) {
-            return res.status(400).json({ error: 'Session ID is required' });
-        }
-
-        const result = await sessionManager.closeSession(sessionId);
-        if (result) {
-            res.json({ 
-                success: true, 
-                message: `Session ${sessionId} closed successfully` 
-            });
-        } else {
-            res.status(404).json({ 
-                success: false, 
-                error: `Session ${sessionId} not found` 
-            });
-        }
-    } catch (error) {
-        console.error('Error closing session:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to close session',
-            details: error.message 
-        });
-    }
-});
-
-// Send a message using a specific session
-app.post('/send-message', async (req, res) => {
-    try {
-        const { sessionId, phone, message } = req.body;
-
-        if (!sessionId || !phone || !message) {
-            return res.status(400).json({ 
-                error: 'Session ID, phone number, and message are required' 
-            });
-        }
-
-        const client = await sessionManager.getSession(sessionId);
-        
-        // Format the phone number
-        let formattedPhone = phone.toString().replace(/[^\d]/g, '');
-        if (!formattedPhone.endsWith('@c.us')) {
-            formattedPhone = `${formattedPhone}@c.us`;
-        }
-
-        console.log(`[Session: ${sessionId}] Sending message to: ${formattedPhone}`);
-
-        // Check if the number exists on WhatsApp
-        const isRegistered = await client.checkNumberStatus(formattedPhone);
-        if (!isRegistered.numberExists) {
-            return res.status(404).json({ error: 'This number is not registered on WhatsApp' });
-        }
-
-        // Send the message
-        const result = await client.sendText(formattedPhone, message);
-        console.log(`[Session: ${sessionId}] Message sent successfully:`, result);
-        
-        res.json({ 
-            success: true, 
-            message: 'Message sent successfully',
-            details: result 
-        });
-
-    } catch (error) {
-        console.error('Error sending message:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to send message',
-            details: error.message 
-        });
-    }
-});
-
-// Get contacts for a specific session
-app.get('/contacts/:sessionId', async (req, res) => {
+app.post('/api/session/:sessionId/close', async (req, res) => {
     try {
         const { sessionId } = req.params;
-
-        if (!sessionId) {
-            return res.status(400).json({ error: 'Session ID is required' });
+        
+        const result = await manager.closeSession(sessionId);
+        
+        if (result.error) {
+            return res.status(400).json({ success: false, error: result.error });
         }
-
-        const client = await sessionManager.getSession(sessionId);
-        console.log(`[Session: ${sessionId}] Fetching contacts...`);
         
-        const contacts = await client.getAllContacts();
-        console.log(`[Session: ${sessionId}] Retrieved ${contacts.length} contacts`);
-        
-        res.json({ 
-            success: true, 
-            sessionId,
-            contactCount: contacts.length,
-            contacts: contacts.map(contact => ({
-                id: contact.id,
-                name: contact.name,
-                pushname: contact.pushname,
-                isGroup: contact.isGroup,
-                isWAContact: contact.isWAContact
-            }))
-        });
-
+        res.json({ success: true, message: 'Session closed successfully' });
     } catch (error) {
-        console.error('Error getting contacts:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to get contacts',
-            details: error.message 
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// Get all active sessions
-app.get('/sessions', (req, res) => {
-    const sessions = sessionManager.getAllSessions();
-    res.json({ 
-        success: true, 
-        sessions 
-    });
+// Get session QR code
+app.get('/api/session/:sessionId/qr', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const qrCode = manager.getQrCode(sessionId);
+        
+        if (!qrCode) {
+            return res.status(404).json({ success: false, error: 'QR code not found' });
+        }
+        
+        res.json({ success: true, qrCode });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get session info
+app.get('/api/session/:sessionId/info', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const info = manager.getSessionInfo(sessionId);
+        
+        if (!info) {
+            return res.status(404).json({ success: false, error: 'Session info not found' });
+        }
+        
+        res.json({ success: true, info });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Send a message
+app.post('/api/send-message', async (req, res) => {
+    try {
+        const { sessionId, to, message } = req.body;
+        
+        if (!sessionId || !to || !message) {
+            return res.status(400).json({ success: false, error: 'Session ID, recipient, and message are required' });
+        }
+        
+        const result = await manager.sendMessage(sessionId, to, message);
+        
+        if (result.error) {
+            return res.status(400).json({ success: false, error: result.error });
+        }
+        
+        res.json({ success: true, message: 'Message sent successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get contacts for a session
+app.get('/api/contacts/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const result = await manager.getContacts(sessionId);
+        
+        if (result.error) {
+            return res.status(400).json({ success: false, error: result.error });
+        }
+        
+        res.json({ success: true, contacts: result.contacts });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get auto-reply configuration
+app.get('/api/auto-reply/:sessionId', (req, res) => {
+    const { sessionId } = req.params;
+    const config = manager.getAutoReply(sessionId);
+    res.json({ success: true, config });
+});
+
+// Set auto-reply configuration
+app.post('/api/auto-reply/:sessionId', (req, res) => {
+    const { sessionId } = req.params;
+    const config = req.body;
+    
+    try {
+        const result = manager.setAutoReply(sessionId, config);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
     console.log('Received SIGTERM. Closing all sessions...');
-    await sessionManager.closeAllSessions();
+    await manager.closeAllSessions();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
     console.log('Received SIGINT. Closing all sessions...');
-    await sessionManager.closeAllSessions();
+    await manager.closeAllSessions();
     process.exit(0);
 });
 
 // Start the server
-app.listen(port, '0.0.0.0', () => {
+server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${port}`);
     console.log('Server is ready to handle WhatsApp sessions');
 });
