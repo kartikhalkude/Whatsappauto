@@ -2,13 +2,17 @@ services:
   - type: web
     name: wpp
     env: node
-    buildCommand: npm install
+    buildCommand: |
+      npm install
+      npm install puppeteer
+      npx puppeteer browsers install chrome
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
+        value: "false"
+      - key: PUPPETEER_CACHE_DIR
+        value: "/opt/render/.cache/puppeteer"
     buildpacks:
-      - https://github.com/jontewks/puppeteer-heroku-buildpack
       - heroku/nodejs
