@@ -4,7 +4,10 @@ services:
     env: node
     buildCommand: |
       npm install
-      npm install puppeteer
+      npm install puppeteer@latest
+      mkdir -p /opt/render/.cache/puppeteer
+      export PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
+      export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
       npx puppeteer browsers install chrome
     startCommand: npm start
     envVars:
@@ -14,5 +17,7 @@ services:
         value: "false"
       - key: PUPPETEER_CACHE_DIR
         value: "/opt/render/.cache/puppeteer"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: "/opt/render/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux/chrome"
     buildpacks:
       - heroku/nodejs
