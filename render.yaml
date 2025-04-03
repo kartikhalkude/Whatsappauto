@@ -2,27 +2,10 @@ services:
   - type: web
     name: wpp
     env: node
-    buildCommand: |
-      npm install
-      npm install puppeteer@latest
-      mkdir -p /opt/render/.cache/puppeteer
-      export PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
-      export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
-      export PUPPETEER_DOWNLOAD_HOST=https://storage.googleapis.com
-      wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-      echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
-      apt-get update
-      apt-get install -y google-chrome-stable
-      ln -s /usr/bin/google-chrome-stable /opt/render/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux/chrome
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "false"
-      - key: PUPPETEER_CACHE_DIR
-        value: "/opt/render/.cache/puppeteer"
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: "/usr/bin/google-chrome-stable"
     buildpacks:
       - heroku/nodejs

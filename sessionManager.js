@@ -1,4 +1,5 @@
 const { create } = require('@wppconnect-team/wppconnect');
+const { chromium } = require('playwright');
 
 class SessionManager {
     constructor(io) {
@@ -135,6 +136,19 @@ class SessionManager {
         }
 
         try {
+            const browser = await chromium.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu'
+                ]
+            });
+
             const client = await create({
                 session: sessionId,
                 catchQR: (base64Qr, asciiQR, attempts) => {
@@ -146,30 +160,7 @@ class SessionManager {
                         base64Image: this.qrCodes[sessionId]
                     });
                 },
-                puppeteerOptions: {
-                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-accelerated-2d-canvas',
-                        '--no-first-run',
-                        '--no-zygote',
-                        '--disable-gpu',
-                        '--single-process',
-                        '--disable-extensions',
-                        '--disable-software-rasterizer',
-                        '--disable-features=site-per-process',
-                        '--disable-features=IsolateOrigins',
-                        '--disable-site-isolation-trials',
-                        '--disable-web-security',
-                        '--disable-features=IsolateOrigins,site-per-process'
-                    ],
-                    headless: true,
-                    ignoreHTTPSErrors: true,
-                    defaultViewport: null,
-                    timeout: 0
-                },
+                browser: browser,
                 status: false,
                 statusFind: (statusSession, session) => {
                     console.log('Status Session:', statusSession);
