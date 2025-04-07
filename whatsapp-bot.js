@@ -12,6 +12,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// Define triggers for auto-replies
+const triggers = {
+    'hello': 'Hi there! This is an automated response.',
+    'help': 'Available commands:\n- hello\n- help\n- info',
+    'info': 'This is a WhatsApp auto-reply bot using Baileys.',
+};
+
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -64,64 +71,68 @@ io.use((socket, next) => {
 });
 
 async function createWhatsAppSession(sessionId) {
-    const sessionPath = `auth_info_${sessionId}`;
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        qrTimeout: 60000
-    });
-
-    const sessionInfo = { sock, state, saveCreds };
-    activeSessions.set(sessionId, sessionInfo);
-    
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect, qr } = update;
+    try {
+        const sessionPath = `auth_info_${sessionId}`;
+        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
         
-        if (qr) {
-            io.to(`session_${sessionId}`).emit('qr', qr);
-        }
+        const sock = makeWASocket({
+            auth: state,
+            printQRInTerminal: true,
+            qrTimeout: 60000
+        });
 
-        if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-                ? lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
-                : true;
+        const sessionInfo = { sock, state, saveCreds };
+        activeSessions.set(sessionId, sessionInfo);
+        
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect, qr } = update;
             
-            io.to(`session_${sessionId}`).emit('connection-status', 'Disconnected');
-            
-            if (shouldReconnect) {
-                createWhatsAppSession(sessionId);
-            } else {
-                activeSessions.delete(sessionId);
+            if (qr) {
+                io.to(`session_${sessionId}`).emit('qr', qr);
             }
-        } else if (connection === 'open') {
-            io.to(`session_${sessionId}`).emit('connection-status', 'Connected');
-            io.to(`session_${sessionId}`).emit('authenticated');
-        }
-    });
 
-    sock.ev.on('creds.update', saveCreds);
-
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        for (const message of messages) {
-            if (!message.key.fromMe && message.message) {
-                const messageText = message.message?.conversation || 
-                                  message.message?.extendedTextMessage?.text || '';
+            if (connection === 'close') {
+                const shouldReconnect = (lastDisconnect?.error instanceof Boom)
+                    ? lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
+                    : true;
                 
-                const trigger = Object.keys(triggers).find(t => 
-                    messageText.toLowerCase().includes(t.toLowerCase())
-                );
+                io.to(`session_${sessionId}`).emit('connection-status', 'Disconnected');
+                
+                if (shouldReconnect) {
+                    createWhatsAppSession(sessionId);
+                } else {
+                    activeSessions.delete(sessionId);
+                }
+            } else if (connection === 'open') {
+                io.to(`session_${sessionId}`).emit('connection-status', 'Connected');
+                io.to(`session_${sessionId}`).emit('authenticated');
+            }
+        });
 
-                if (trigger) {
-                    const response = triggers[trigger];
-                    await sock.sendMessage(message.key.remoteJid, { text: response });
+        sock.ev.on('creds.update', saveCreds);
+
+        sock.ev.on('messages.upsert', async ({ messages }) => {
+            for (const message of messages) {
+                if (!message.key.fromMe && message.message) {
+                    const messageText = message.message?.conversation || 
+                                      message.message?.extendedTextMessage?.text || '';
+                    
+                    const trigger = Object.keys(triggers).find(t => 
+                        messageText.toLowerCase().includes(t.toLowerCase())
+                    );
+
+                    if (trigger) {
+                        const response = triggers[trigger];
+                        await sock.sendMessage(message.key.remoteJid, { text: response });
+                    }
                 }
             }
-        }
-    });
+        });
 
-    return sessionInfo;
+        return sessionInfo;
+    } catch (error) {
+        console.error('Failed to create WhatsApp session:', error);
+    }
 }
 
 io.on('connection', (socket) => {
