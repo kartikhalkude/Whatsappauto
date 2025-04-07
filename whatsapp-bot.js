@@ -6,28 +6,62 @@ const socketIO = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use(limiter);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Store active sessions
+// Store active sessions with validation
 const activeSessions = new Map();
+const MAX_SESSIONS_PER_IP = 3;
+const ipSessionCount = new Map();
 
-// Session management routes
+// Secure session creation with IP tracking
 app.post('/api/session/create', (req, res) => {
-    const sessionId = crypto.randomBytes(16).toString('hex');
+    const clientIp = req.ip;
+    const currentCount = ipSessionCount.get(clientIp) || 0;
+    
+    if (currentCount >= MAX_SESSIONS_PER_IP) {
+        return res.status(429).json({ error: 'Maximum session limit reached' });
+    }
+
+    const sessionId = crypto.randomBytes(32).toString('hex');
+    ipSessionCount.set(clientIp, currentCount + 1);
     res.json({ sessionId });
 });
 
-const triggers = {
-    'hello': 'Hi there! This is an automated response.',
-    'help': 'Available commands:\n- hello\n- help\n- info',
-    'info': 'This is a WhatsApp auto-reply bot using Baileys.',
-};
+// Session cleanup on disconnect
+function cleanupSession(sessionId) {
+    const session = activeSessions.get(sessionId);
+    if (session) {
+        activeSessions.delete(sessionId);
+        // Clean up auth files
+        const sessionPath = `auth_info_${sessionId}`;
+        if (fs.existsSync(sessionPath)) {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+        }
+    }
+}
+
+// Secure WebSocket connection
+io.use((socket, next) => {
+    const clientIp = socket.handshake.address;
+    if (ipSessionCount.get(clientIp) > MAX_SESSIONS_PER_IP) {
+        return next(new Error('Maximum session limit reached'));
+    }
+    next();
+});
 
 async function createWhatsAppSession(sessionId) {
     const sessionPath = `auth_info_${sessionId}`;
@@ -102,6 +136,14 @@ io.on('connection', (socket) => {
         socket.emit('triggers-update', triggers);
         socket.emit('connection-status', 'Initializing...');
     });
+});
+
+// Add cleanup on process exit
+process.on('SIGINT', () => {
+    activeSessions.forEach((session, sessionId) => {
+        cleanupSession(sessionId);
+    });
+    process.exit(0);
 });
 
 const PORT = process.env.PORT || 3000;
