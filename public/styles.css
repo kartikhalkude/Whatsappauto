@@ -1,0 +1,262 @@
+:root {
+    --primary-color: #25D366;
+    --secondary-color: #128C7E;
+    --background-color: #f5f6f8;
+    --text-color: #333;
+    --border-radius: 8px;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.app-container {
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--secondary-color);
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.session-panel {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.sessions-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.sessions-list button {
+    background-color: white;
+    color: var(--secondary-color);
+    border: 2px solid var(--secondary-color);
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sessions-list button:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.session-container {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.hidden {
+    display: none;
+}
+
+.connection-status {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.status-badge.connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.qr-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.qr-wrapper {
+    display: inline-block;
+    padding: 1.5rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.qr-placeholder {
+    color: #ccc;
+    padding: 2rem;
+}
+
+.qr-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.triggers-section {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.triggers-section h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.triggers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.trigger-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.status {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.status.connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#qrcode-container {
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: inline-block;
+    background: white;
+}
+
+#qrcode {
+    display: block;
+    margin: 0 auto;
+}
+
+.triggers-section {
+    margin-top: 30px;
+    text-align: left;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+#triggers-list {
+    margin-top: 10px;
+}
+
+.session-controls {
+    margin: 20px 0;
+    padding: 10px;
+}
+
+#new-session {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+#active-sessions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#active-sessions button {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.trigger-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 5px 0;
+}
